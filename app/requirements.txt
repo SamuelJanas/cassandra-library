@@ -1,0 +1,3 @@
+Flask
+cassandra-driver
+Faker

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Library System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        input[type="text"] {
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Library System</h1>
+        
+        <div>
+            <h2>Make Reservation</h2>
+            <label for="make-book-id">Book ID:</label>
+            <input type="text" id="make-book-id"><br>
+            <label for="make-user-id">User ID:</label>
+            <input type="text" id="make-user-id"><br>
+            <button onclick="makeReservation()">Make Reservation</button>
+        </div>
+        
+        <div>
+            <h2>Update Reservation</h2>
+            <label for="update-reservation-id">Reservation ID:</label>
+            <input type="text" id="update-reservation-id"><br>
+            <label for="update-new-user-id">New User ID:</label>
+            <input type="text" id="update-new-user-id"><br>
+            <button onclick="updateReservation()">Update Reservation</button>
+        </div>
+        
+        <div>
+            <h2>View Reservation</h2>
+            <label for="view-reservation-id">Reservation ID:</label>
+            <input type="text" id="view-reservation-id"><br>
+            <button onclick="viewReservation()">View Reservation</button>
+        </div>
+
+        <div>
+            <h2>Remove Reservation</h2>
+            <label for="remove-book-id">Book ID:</label>
+            <input type="text" id="remove-book-id"><br>
+            <label for="remove-user-id">User ID:</label>
+            <input type="text" id="remove-user-id"><br>
+            <button onclick="removeReservation()">Remove Reservation</button>
+        </div>
+
+        <div>
+            <h2>Current Reservations</h2>
+            <table id="reservation-table">
+                <thead>
+                    <tr>
+                        <th>Reservation ID</th>
+                        <th>Book ID</th>
+                        <th>User ID</th>
+                    </tr>
+                </thead>
+                <tbody id="reservation-list">
+                    <!-- Reservations will be inserted here dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <h2>Available Books</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Book ID</th>
+                    <th>Title</th>
+                    <th>Author</th>
+                </tr>
+            </thead>
+            <tbody id="book-list">
+                {% for book in available_books %}
+                <tr>
+                    <td>{{ book.book_id }}</td>
+                    <td>{{ book.title }}</td>
+                    <td>{{ book.author }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            
+        </table>
+    </div>
+
+    <script>
+        async function makeReservation() {
+            const bookId = document.getElementById('make-book-id').value;
+            const userId = document.getElementById('make-user-id').value;
+            const response = await fetch('/make_reservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ book_id: bookId, user_id: userId })
+            });
+            const data = await response.json();
+            alert(data.message || data.error);
+        }
+
+        async function updateReservation() {
+            const reservationId = document.getElementById('update-reservation-id').value;
+            const newUserId = document.getElementById('update-new-user-id').value;
+            const response = await fetch('/update_reservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reservation_id: reservationId, new_user_id: newUserId })
+            });
+            const data = await response.json();
+            alert(data.message || data.error);
+        }
+
+        async function viewReservation() {
+            const reservationId = document.getElementById('view-reservation-id').value;
+            const response = await fetch(`/view_reservation/${reservationId}`);
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                alert(`Reservation ID: ${data.reservation_id}\nBook ID: ${data.book_id}\nUser ID: ${data.user_id}`);
+            }
+        }
+
+        // Function to fetch and display available books
+        async function fetchAvailableBooks() {
+            const response = await fetch('/available_books');
+            const data = await response.json();
+            const bookListContainer = document.getElementById('book-list');
+            bookListContainer.innerHTML = ''; // Clear previous content
+            data.forEach(book => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${book.book_id}</td>
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                `;
+                bookListContainer.appendChild(row);
+            });
+        }
+
+        async function removeReservation() {
+            const bookId = document.getElementById('remove-book-id').value;
+            const userId = document.getElementById('remove-user-id').value;
+            const response = await fetch('/remove_reservation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ book_id: bookId, user_id: userId })
+            });
+            const data = await response.json();
+            alert(data.message || data.error);
+        }
+
+        // Function to fetch and display reservations
+        async function fetchReservations() {
+            const response = await fetch('/reservations');
+            const data = await response.json();
+            const reservationListContainer = document.getElementById('reservation-list');
+            reservationListContainer.innerHTML = ''; // Clear previous content
+            data.forEach(reservation => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${reservation.reservation_id}</td>
+                    <td>${reservation.book_id}</td>
+                    <td>${reservation.user_id}</td>
+                `;
+                reservationListContainer.appendChild(row);
+            });
+        }
+
+        // Fetch reservations when the page loads
+        window.onload = function() {
+            fetchReservations();
+            fetchAvailableBooks();
+        }
+
+    </script>
+</body>
+</html>
