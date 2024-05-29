@@ -76,14 +76,13 @@ document.addEventListener("DOMContentLoaded", () => {
     updateReservationForm.addEventListener("submit", event => {
         event.preventDefault();
         const reservationId = document.getElementById("reservation-id").value;
-        const newUserId = document.getElementById("new-user-id").value;
 
         fetch("/update_reservation", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ reservation_id: reservationId, new_user_id: newUserId })
+            body: JSON.stringify({ reservation_id: reservationId})
         })
             .then(response => response.json())
             .then(data => {

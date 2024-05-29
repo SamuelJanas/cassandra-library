@@ -30,18 +30,25 @@ class LibrarySystem:
         
         # Make the reservation
         reserved_at = datetime.now()
+        self.session.execute("INSERT INTO book_reservations (book_id, reservation_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (book_id, reservation_id, user_id, reserved_at))
         self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, user_id, reserved_at))
         self.session.execute("INSERT INTO user_reservations (user_id, reservation_id, book_id, reserved_at) VALUES (%s, %s, %s, %s)", (user_id, reservation_id, book_id, reserved_at))
-        self.session.execute("INSERT INTO book_reservations (book_id, reservation_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (book_id, reservation_id, user_id, reserved_at))
         return {"message": "Reservation made successfully."}
         
 
     @run_on_executor
-    def update_reservation(self, reservation_id, new_user_id):
+    def update_reservation(self, reservation_id):
         reservation = self.session.execute("SELECT * FROM reservations WHERE reservation_id = %s", (reservation_id,)).one()
         if not reservation:
             return {"error": "Reservation not found."}
-        self.session.execute("UPDATE reservations SET user_id = %s WHERE reservation_id = %s", (new_user_id, reservation_id))
+        # read necessary data
+        user_id = reservation.user_id
+        book_id = reservation.book_id
+        reserved_at = datetime.now()
+        # update the reservation
+        self.session.execute("UPDATE reservations SET reserved_at = %s WHERE reservation_id = %s", (reserved_at, reservation_id))
+        self.session.execute("UPDATE user_reservations SET reserved_at = %s WHERE reservation_id = %s AND user_id = %s", (reserved_at, reservation_id, user_id))
+        self.session.execute("UPDATE book_reservations SET reserved_at = %s WHERE reservation_id = %s AND book_id = %s", (reserved_at, reservation_id, book_id))
         return {"message": "Reservation updated successfully."}
 
     @run_on_executor
@@ -102,8 +109,7 @@ class UpdateReservationHandler(BaseHandler):
     async def post(self):
         data = json.loads(self.request.body)
         reservation_id = uuid.UUID(data['reservation_id'])
-        new_user_id = data['new_user_id']
-        result = await library_system.update_reservation(reservation_id, new_user_id)
+        result = await library_system.update_reservation(reservation_id)
         self.write(json.dumps(result))
 
 class RemoveReservationHandler(BaseHandler):
