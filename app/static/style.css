@@ -1,0 +1,114 @@
+body {
+    font-family: 'Courier New', Courier, monospace; /* Use monospace font */
+    background-color: #222; /* Darker background */
+    color: #99ff99; /* Light green text */
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    animation: jiggleUpDown 0.7s infinite alternate; /* Jiggling animation */
+}
+
+@keyframes jiggleUpDown {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+}
+
+.form-block:nth-child(even) {
+    max-width: 40%;
+    margin: 20px auto; /* Center horizontally and add top margin */
+    background-color: #333; /* Darker background for form blocks */
+    padding: 20px;
+    border-radius: 8px;
+    animation: jiggleLeft 1.5s infinite alternate; /* Jiggling animation for even form blocks */
+}
+
+.form-block:nth-child(odd) {
+    max-width: 40%;
+    margin: 20px auto; /* Center horizontally and add top margin */
+    background-color: #333; /* Darker background for form blocks */
+    padding: 20px;
+    border-radius: 8px;
+    animation: jiggleRight 1s infinite alternate; /* Jiggling animation for odd form blocks */
+}
+
+@keyframes jiggleLeft {
+    from { transform: translateX(0); }
+    to { transform: translateX(-7px); }
+}
+
+@keyframes jiggleRight {
+    from { transform: translateX(0); }
+    to { transform: translateX(8px); }
+}
+
+.table-block {
+    max-width: 80%;
+    margin: 20px auto; /* Center horizontally and add top margin */
+    background-color: #333; /* Darker background for table blocks */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+form {
+    width: 100%;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+input[type="text"] {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #99ff99;
+    border-radius: 4px;
+    background-color: #444; /* Darker input background */
+    color: #99ff99; /* Light green text */
+}
+
+button {
+    width: 100%;
+    padding: 10px 20px;
+    background-color: #111;
+    color: #99ff99;
+    border: 1px solid #99ff99;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+button:hover {
+    background-color: #99ff99;
+    color: #111;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table, th, td {
+    border: 1px solid #99ff99; /* Light green borders */
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+}
+
+thead {
+    background-color: #333; /* Darker header background */
+}
+
+tbody tr:nth-child(even) {
+    background-color: #444; /* Darker even rows */
+}

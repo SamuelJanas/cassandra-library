@@ -4,7 +4,7 @@ import uuid
 
 fake = Faker()
 
-contact_points = ['172.28.1.1', '172.28.1.2', '172.28.1.3']
+contact_points = ['cas1', 'cas2', 'cas3']
 cluster = Cluster(contact_points=contact_points)
 session = cluster.connect()
 
@@ -16,43 +16,65 @@ session.execute("""
 
 session.execute("USE library")
 
-# Create books table with reserved column as BOOLEAN
+# Create books table
 session.execute("""
     CREATE TABLE IF NOT EXISTS books (
         book_id UUID PRIMARY KEY,
         title TEXT,
         author TEXT,
-        reserved BOOLEAN
+        genre TEXT,
+        published_year INT
     )
 """)
 
+# Create reservations table
 session.execute("""
     CREATE TABLE IF NOT EXISTS reservations (
         reservation_id UUID PRIMARY KEY,
         book_id UUID,
-        user_id UUID
+        user_id INT,
+        reserved_at TIMESTAMP
     )
 """)
-# Both needed so it's faster to query by book_id or user_id
+
+# Create user_reservations table
 session.execute("""
-    CREATE INDEX IF NOT EXISTS ON reservations (book_id)
+    CREATE TABLE IF NOT EXISTS user_reservations (
+        user_id INT,
+        reservation_id UUID,
+        book_id UUID,
+        reserved_at TIMESTAMP,
+        PRIMARY KEY (user_id, reservation_id)
+    )
 """)
 
+# Create book_reservations table
 session.execute("""
-    CREATE INDEX IF NOT EXISTS ON reservations (user_id)
+    CREATE TABLE IF NOT EXISTS book_reservations (
+        book_id UUID,
+        reservation_id UUID,
+        user_id INT,
+        reserved_at TIMESTAMP,
+        PRIMARY KEY (book_id, reservation_id)
+    )
 """)
 
-print("Books table created successfully.")
+print("Tables created successfully.")
 print("Populating books...")
 
-# Populate books table with 200 records, setting reserved to False
+# Populate books table with 200 records, setting available to True
 for i in range(200):
     book_id = uuid.uuid4()
-    title = fake.sentence(nb_words=3)
+    title = fake.sentence(nb_words=3).replace('.', '')
     author = fake.name()
-    reserved = False
+    genres = ['Mystery', 'Thriller', 'Romance', 'Science Fiction', 'Fantasy', 'Horror', 'Historical Fiction', 'Non-Fiction']
+    genre = fake.random_element(elements=genres)
+    published_year = int(fake.year())
+    available = True
     
-    session.execute("INSERT INTO books (book_id, title, author, reserved) VALUES (%s, %s, %s, %s)", (book_id, title, author, reserved))
+    session.execute("""
+        INSERT INTO books (book_id, title, author, genre, published_year, available) 
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (book_id, title, author, genre, published_year, available))
 
 print("Books populated successfully.")
-  
