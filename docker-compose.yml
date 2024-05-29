@@ -61,8 +61,6 @@ services:
       timeout: 5s
       retries: 60
 
-    
-
  cas3:
     container_name: cas3
     image: cassandra:latest
