@@ -140,12 +140,6 @@ class GetReservationsHandler(BaseHandler):
         reservations = [{"reservation_id": str(row["reservation_id"]), "book_id": str(row["book_id"]), "user_id": row["user_id"], "reserved_at": str(row["reserved_at"])} for row in rows]
         self.write(json.dumps(reservations))
 
-class GetUsersHandler(BaseHandler):
-    async def get(self):
-        # Assuming there is an endpoint to get users data
-        users = [{"user_id": 1, "name": "John Doe", "email": "john@example.com"}]  # Example data
-        self.write(json.dumps(users))
-
 class IndexHandler(tornado.web.RequestHandler):
     async def get(self):
         available_books = await library_system.get_books()
@@ -159,7 +153,6 @@ def make_app():
         (r"/remove_reservation", RemoveReservationHandler),
         (r"/api/books", GetBooksHandler),
         (r"/api/reservations", GetReservationsHandler),
-        (r"/api/users", GetUsersHandler),
         (r"/", IndexHandler),
     ],
     template_path="templates",

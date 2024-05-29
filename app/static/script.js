@@ -38,21 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
     }
 
-    function fetchUsers() {
-        // Assuming there is an endpoint to get users data
-        fetch("/api/users")
-            .then(response => response.json())
-            .then(data => {
-                usersTable.innerHTML = "";
-                data.forEach(user => {
-                    const row = usersTable.insertRow();
-                    row.insertCell(0).textContent = user.user_id;
-                    row.insertCell(1).textContent = user.name;
-                    row.insertCell(2).textContent = user.email;
-                });
-            });
-    }
-
     makeReservationForm.addEventListener("submit", event => {
         event.preventDefault();
         const bookId = document.getElementById("book-id").value;
