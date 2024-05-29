@@ -23,8 +23,7 @@ session.execute("""
         title TEXT,
         author TEXT,
         genre TEXT,
-        published_year INT,
-        available BOOLEAN
+        published_year INT
     )
 """)
 
