@@ -8,7 +8,7 @@ services:
     - cassandra
   build:
     context: ./app
-    dockerfile: Dockerfile
+    dockerfile: server.Dockerfile
   develop:
     watch:
       - action: sync
@@ -26,8 +26,21 @@ services:
           condition: service_healthy
       cas3:
           condition: service_healthy
-  ports:
-    - "8888:8888"
+
+ seeder:
+  container_name: seeder
+  networks:
+    - cassandra
+  build:
+    context: ./app
+    dockerfile: Dockerfile
+  depends_on:
+      cas1:
+          condition: service_healthy
+      cas2:
+          condition: service_healthy
+      cas3:
+          condition: service_healthy
 
  cas1:
     container_name: cas1
