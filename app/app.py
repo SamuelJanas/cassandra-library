@@ -101,12 +101,6 @@ class UpdateReservationHandler(BaseHandler):
         result = await library_system.update_reservation(reservation_id, new_user_id)
         self.write(json.dumps(result))
 
-class ViewReservationHandler(BaseHandler):
-    async def get(self, reservation_id):
-        reservation_id = uuid.UUID(reservation_id)
-        result = await library_system.view_reservation(reservation_id)
-        self.write(json.dumps(result))
-
 class RemoveReservationHandler(BaseHandler):
     async def post(self):
         data = json.loads(self.request.body)
@@ -115,24 +109,39 @@ class RemoveReservationHandler(BaseHandler):
         result = await library_system.remove_reservation(book_id, user_id)
         self.write(json.dumps(result))
 
+class GetBooksHandler(BaseHandler):
+    async def get(self):
+        rows = await library_system.get_available_books()
+        books = [{"book_id": str(row["book_id"]), "title": row["title"], "author": row["author"], "genre": row["genre"], "published_year": row["published_year"], "available": row["available"]} for row in rows]
+        self.write(json.dumps(books))
+
+class GetReservationsHandler(BaseHandler):
+    async def get(self):
+        rows = await library_system.get_reservations()
+        reservations = [{"reservation_id": str(row["reservation_id"]), "book_id": str(row["book_id"]), "user_id": row["user_id"], "reserved_at": str(row["reserved_at"])} for row in rows]
+        self.write(json.dumps(reservations))
+
+class GetUsersHandler(BaseHandler):
+    async def get(self):
+        # Assuming there is an endpoint to get users data
+        users = [{"user_id": 1, "name": "John Doe", "email": "john@example.com"}]  # Example data
+        self.write(json.dumps(users))
+
 class IndexHandler(tornado.web.RequestHandler):
     async def get(self):
         available_books = await library_system.get_available_books()
         self.render("index.html", available_books=available_books)
 
-class GetReservationsHandler(BaseHandler):
-    async def get(self):
-        reservations = await library_system.get_reservations()
-        self.write(json.dumps(reservations))
 
 def make_app():
     return tornado.web.Application([
         (r"/make_reservation", MakeReservationHandler),
         (r"/update_reservation", UpdateReservationHandler),
-        (r"/view_reservation/([0-9a-fA-F-]+)", ViewReservationHandler),
         (r"/remove_reservation", RemoveReservationHandler),
+        (r"/api/books", GetBooksHandler),
+        (r"/api/reservations", GetReservationsHandler),
+        (r"/api/users", GetUsersHandler),
         (r"/", IndexHandler),
-        (r"/reservations", GetReservationsHandler),
     ],
     template_path="templates",
     static_path="static",
