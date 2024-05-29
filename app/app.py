@@ -5,6 +5,7 @@ from cassandra.cluster import Cluster
 from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor
 import json
+from datetime import datetime
 
 class LibrarySystem:
     def __init__(self, contact_points):
@@ -28,9 +29,10 @@ class LibrarySystem:
         reservation = self.session.execute("SELECT * FROM reservations WHERE book_id = %s", (book_id,)).one()
         if reservation:
             return {"error": "Book already reserved."}
-        self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id) VALUES (%s, %s, %s)", (reservation_id, book_id, int(user_id)))
+        reserved_at = datetime.now()
+        self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, int(user_id), reserved_at))
         return {"message": f"Reservation {str(reservation_id)} made successfully.", "reservation_id": str(reservation_id)}
-
+    
     @run_on_executor
     def update_reservation(self, reservation_id, new_user_id):
         reservation = self.session.execute("SELECT * FROM reservations WHERE reservation_id = %s", (reservation_id,)).one()
@@ -70,12 +72,12 @@ class LibrarySystem:
     @run_on_executor
     def get_available_books(self):
         rows = self.session.execute("SELECT * FROM books")
-        return [{"book_id": str(row.book_id), "title": row.title, "author": row.author} for row in rows]
-    
+        return [{"book_id": str(row.book_id), "title": row.title, "author": row.author, "genre": row.genre, "published_year": row.published_year, "available": row.available} for row in rows]
+
     @run_on_executor
     def get_reservations(self):
         rows = self.session.execute("SELECT * FROM reservations")
-        reservations = [{"reservation_id": str(row.reservation_id), "book_id": str(row.book_id), "user_id": row.user_id} for row in rows]
+        reservations = [{"reservation_id": str(row.reservation_id), "book_id": str(row.book_id), "user_id": row.user_id, "reserved_at": row.reserved_at} for row in rows]
         return reservations
 
 contact_points = ['cas1', 'cas2', 'cas3']

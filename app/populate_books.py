@@ -68,8 +68,9 @@ for i in range(200):
     book_id = uuid.uuid4()
     title = fake.sentence(nb_words=3).replace('.', '')
     author = fake.name()
-    genre = fake.word()
-    published_year = fake.year()
+    genres = ['Mystery', 'Thriller', 'Romance', 'Science Fiction', 'Fantasy', 'Horror', 'Historical Fiction', 'Non-Fiction']
+    genre = fake.random_element(elements=genres)
+    published_year = int(fake.year())
     available = True
     
     session.execute("""
