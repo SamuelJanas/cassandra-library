@@ -26,6 +26,8 @@ services:
           condition: service_healthy
       cas3:
           condition: service_healthy
+  ports:
+    - "8888:8888"
 
  seeder:
   container_name: seeder
