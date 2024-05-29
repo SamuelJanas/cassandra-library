@@ -70,14 +70,22 @@ class LibrarySystem:
         except ValueError:
             return {"error": "Invalid user_id."}
         
-        # Check if the reservation exists for the given book and user IDs
-        reservation = self.session.execute("SELECT * FROM reservations WHERE book_id = %s AND user_id = %s", (book_id, int(user_id))).one()
-        if not reservation:
-            return {"error": "Reservation not found."}
+        # Check book_reservation if the book is available
+        book = self.session.execute("SELECT * FROM book_reservations WHERE book_id = %s", (book_id,)).one()
+        if book:
+            reservation_id = book.reservation_id
+            # check if the user is the owner of the reservation
+            if int(book.user_id) != user_id:
+                return {"error": "User is not the owner of the reservation."}
+            # remove the reservation
+            self.session.execute("DELETE FROM book_reservations WHERE book_id = %s AND reservation_id=%s", (book_id, reservation_id))
+            self.session.execute("DELETE FROM reservations WHERE reservation_id = %s", (reservation_id,))
+            self.session.execute("DELETE FROM user_reservations WHERE user_id = %s AND reservation_id = %s", (user_id, reservation_id))
+            return {"message": "Reservation removed successfully."}
         
-        # Remove the reservation
-        self.session.execute("DELETE FROM reservations WHERE book_id = %s AND user_id = %s", (book_id, user_id))
-        return {"message": "Reservation removed successfully."}
+        return {"error": "Reservation not found."}
+        # remove the reservation
+        
 
     @run_on_executor
     def get_books(self):
