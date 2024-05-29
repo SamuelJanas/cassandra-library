@@ -23,16 +23,19 @@ class LibrarySystem:
         except ValueError:
             return {"error": "Invalid user_id."}
         
-        book = self.session.execute("SELECT * FROM books WHERE book_id = %s", (book_id,)).one()
-        if not book:
-            return {"error": "Book not found."}
-        reservation = self.session.execute("SELECT * FROM reservations WHERE book_id = %s", (book_id,)).one()
-        if reservation:
-            return {"error": "Book already reserved."}
+        # Check book_reservation if the book is available
+        book = self.session.execute("SELECT * FROM book_reservations WHERE book_id = %s", (book_id,)).one()
+        if book:
+            return {"error": "Book is already reserved."}
+        
+        # Make the reservation
         reserved_at = datetime.now()
-        self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, int(user_id), reserved_at))
-        return {"message": f"Reservation {str(reservation_id)} made successfully.", "reservation_id": str(reservation_id)}
-    
+        self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, user_id, reserved_at))
+        self.session.execute("INSERT INTO user_reservations (user_id, reservation_id, book_id, reserved_at) VALUES (%s, %s, %s, %s)", (user_id, reservation_id, book_id, reserved_at))
+        self.session.execute("INSERT INTO book_reservations (book_id, reservation_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (book_id, reservation_id, user_id, reserved_at))
+        return {"message": "Reservation made successfully."}
+        
+
     @run_on_executor
     def update_reservation(self, reservation_id, new_user_id):
         reservation = self.session.execute("SELECT * FROM reservations WHERE reservation_id = %s", (reservation_id,)).one()
@@ -70,9 +73,9 @@ class LibrarySystem:
         return {"message": "Reservation removed successfully."}
 
     @run_on_executor
-    def get_available_books(self):
+    def get_books(self):
         rows = self.session.execute("SELECT * FROM books")
-        return [{"book_id": str(row.book_id), "title": row.title, "author": row.author, "genre": row.genre, "published_year": row.published_year, "available": row.available} for row in rows]
+        return [{"book_id": str(row.book_id), "title": row.title, "author": row.author, "genre": row.genre, "published_year": row.published_year} for row in rows]
 
     @run_on_executor
     def get_reservations(self):
@@ -113,8 +116,8 @@ class RemoveReservationHandler(BaseHandler):
 
 class GetBooksHandler(BaseHandler):
     async def get(self):
-        rows = await library_system.get_available_books()
-        books = [{"book_id": str(row["book_id"]), "title": row["title"], "author": row["author"], "genre": row["genre"], "published_year": row["published_year"], "available": row["available"]} for row in rows]
+        rows = await library_system.get_books()
+        books = [{"book_id": str(row["book_id"]), "title": row["title"], "author": row["author"], "genre": row["genre"], "published_year": row["published_year"]} for row in rows]
         self.write(json.dumps(books))
 
 class GetReservationsHandler(BaseHandler):
@@ -131,7 +134,7 @@ class GetUsersHandler(BaseHandler):
 
 class IndexHandler(tornado.web.RequestHandler):
     async def get(self):
-        available_books = await library_system.get_available_books()
+        available_books = await library_system.get_books()
         self.render("index.html", available_books=available_books)
 
 

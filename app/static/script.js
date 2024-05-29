@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     row.insertCell(2).textContent = book.author;
                     row.insertCell(3).textContent = book.genre;
                     row.insertCell(4).textContent = book.published_year;
-                    row.insertCell(5).textContent = book.available ? "Yes" : "No";
                 });
             });
     }
