@@ -10,3 +10,7 @@ COPY ./requirements.txt /app/requirements.txt
 RUN pip install -r requirements.txt
 
 COPY . /app
+COPY wait-for-it.sh /app/wait-for-it.sh
+RUN chmod +x /app/wait-for-it.sh
+
+CMD ["./wait-for-it.sh", "cas1:9042", "--", "./wait-for-it.sh", "cas2:9043", "--", "./wait-for-it.sh", "cas3:9044", "--", "python", "populate_books.py", "&&", "python", "app.py"]

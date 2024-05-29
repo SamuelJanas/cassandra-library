@@ -4,7 +4,7 @@ import uuid
 
 fake = Faker()
 
-contact_points = ['172.28.1.1', '172.28.1.2', '172.28.1.3']
+contact_points = ['cas1', 'cas2', 'cas3']
 cluster = Cluster(contact_points=contact_points)
 session = cluster.connect()
 
