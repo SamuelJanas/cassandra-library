@@ -8,62 +8,67 @@
     </head>
     <body>
         <h1>Library Reservation System</h1>
-        
-        <h2>Make Reservation</h2>
-        <form id="make-reservation-form">
-            <label for="book-id">Book ID:</label>
-            <input type="text" id="book-id" name="book-id" required>
-            <label for="user-id">User ID:</label>
-            <input type="text" id="user-id" name="user-id" required>
-            <button type="submit">Make Reservation</button>
-        </form>
-        
-        <h2>Renew Reservation</h2>
-        <form id="update-reservation-form">
-            <label for="reservation-id">Reservation ID:</label>
-            <input type="text" id="reservation-id" name="reservation-id" required>
-            <button type="submit">Update Reservation</button>
-        </form>
-        
-        <h2>Remove Reservation</h2>
-        <form id="remove-reservation-form">
-            <label for="remove-book-id">Book ID:</label>
-            <input type="text" id="remove-book-id" name="remove-book-id" required>
-            <label for="remove-user-id">User ID:</label>
-            <input type="text" id="remove-user-id" name="remove-user-id" required>
-            <button type="submit">Remove Reservation</button>
-        </form>
+        <div class="form-block">
+            <h2>Make Reservation</h2>
+            <form id="make-reservation-form">
+                <label for="book-id">Book ID:</label>
+                <input type="text" id="book-id" name="book-id" required>
+                <label for="user-id">User ID:</label>
+                <input type="text" id="user-id" name="user-id" required>
+                <button type="submit">Make Reservation</button>
+            </form>
+        </div>
+        <div class="form-block">
+            <h2>Renew Reservation</h2>
+            <form id="update-reservation-form">
+                <label for="reservation-id">Reservation ID:</label>
+                <input type="text" id="reservation-id" name="reservation-id"
+                    required>
+                <button type="submit">Update Reservation</button>
+            </form>
+        </div>
+        <div class="form-block">
+            <h2>Remove Reservation</h2>
+            <form id="remove-reservation-form">
+                <label for="remove-book-id">Book ID:</label>
+                <input type="text" id="remove-book-id" name="remove-book-id"
+                    required>
+                <label for="remove-user-id">User ID:</label>
+                <input type="text" id="remove-user-id" name="remove-user-id"
+                    required>
+                <button type="submit">Remove Reservation</button>
+            </form>
+        </div>
+        <div class="table-block">
+            <h2>Reservations</h2>
+            <table id="reservations-table">
+                <thead>
+                    <tr>
+                        <th>Reservation ID</th>
+                        <th>Book ID</th>
+                        <th>User ID</th>
+                        <th>Reserved At</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="table-block">
+            <h2>Books</h2>
+            <table id="books-table">
+                <thead>
+                    <tr>
+                        <th>Book ID</th>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>Genre</th>
+                        <th>Published Year</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
 
-        <h2>Reservations</h2>
-        <table id="reservations-table">
-            <thead>
-                <tr>
-                    <th>Reservation ID</th>
-                    <th>Book ID</th>
-                    <th>User ID</th>
-                    <th>Reserved At</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    
-            
-        <h2>Books</h2>
-        <table id="books-table">
-            <thead>
-                <tr>
-                    <th>Book ID</th>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Genre</th>
-                    <th>Published Year</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    
-
-
-    <script src="../static/script.js"></script>
-</body>
+        <script src="../static/script.js"></script>
+    </body>
 </html>
