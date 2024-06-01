@@ -89,7 +89,8 @@ class LibrarySystem:
 
     @run_on_executor
     def get_books(self):
-        rows = self.session.execute("SELECT * FROM books")
+        # get 100 books
+        rows = self.session.execute("SELECT * FROM books LIMIT 100")
         return [{"book_id": str(row.book_id), "title": row.title, "author": row.author, "genre": row.genre, "published_year": row.published_year} for row in rows]
 
     @run_on_executor
@@ -133,6 +134,7 @@ class GetBooksHandler(BaseHandler):
         rows = await library_system.get_books()
         books = [{"book_id": str(row["book_id"]), "title": row["title"], "author": row["author"], "genre": row["genre"], "published_year": row["published_year"]} for row in rows]
         self.write(json.dumps(books))
+
 
 class GetReservationsHandler(BaseHandler):
     async def get(self):
