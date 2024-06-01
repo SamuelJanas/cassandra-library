@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const booksTable = document.getElementById("books-table").getElementsByTagName("tbody")[0];
     const reservationsTable = document.getElementById("reservations-table").getElementsByTagName("tbody")[0];
-    const usersTable = document.getElementById("users-table").getElementsByTagName("tbody")[0];
 
     const makeReservationForm = document.getElementById("make-reservation-form");
     const updateReservationForm = document.getElementById("update-reservation-form");
@@ -19,6 +18,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     row.insertCell(2).textContent = book.author;
                     row.insertCell(3).textContent = book.genre;
                     row.insertCell(4).textContent = book.published_year;
+                    // log that the book is added to the table
+                    console.log("Book added to the table");
                 });
             });
     }
@@ -98,5 +99,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     fetchBooks();
     fetchReservations();
-    fetchUsers();
 });
