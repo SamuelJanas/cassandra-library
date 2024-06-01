@@ -58,10 +58,11 @@ def main(csv_file=None, num_records=200):
     # Create reservations table
     session.execute("""
         CREATE TABLE IF NOT EXISTS reservations (
-            reservation_id UUID PRIMARY KEY,
+            reservation_id UUID,
             book_id UUID,
             user_id INT,
-            reserved_at TIMESTAMP
+            reserved_at TIMESTAMP,
+            PRIMARY KEY (user_id, book_id)
         )
     """)
 
