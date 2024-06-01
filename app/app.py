@@ -1,6 +1,8 @@
 import uuid
+import time
 import tornado.ioloop
 import tornado.web
+import cassandra
 from cassandra.cluster import Cluster
 from tornado.concurrent import run_on_executor
 from concurrent.futures import ThreadPoolExecutor
@@ -15,52 +17,67 @@ class LibrarySystem:
         self.executor = ThreadPoolExecutor(max_workers=4)
 
     @run_on_executor
-    def make_reservation(self, book_id, user_id):
-        reservation_id = uuid.uuid4()
-        # check if user_id is an integer
+    def make_reservation(self, book_id, user_id, retries=1):
+        for _ in range(retries):
+            try:
+                reservation_id = uuid.uuid4()
+                # check if user_id is an integer
+                try:
+                    user_id = int(user_id)
+                except ValueError:
+                    return {"error": "Invalid user_id."}
+
+                # Check if the book is available for reservation
+                query = "SELECT * FROM book_reservations WHERE book_id = %s LIMIT 1"
+                existing_reservation = self.session.execute(query, (book_id,)).one()
+                if existing_reservation:
+                    return {"error": "Book is already reserved."}
+
+                # Check if the book exists
+                book = self.session.execute("SELECT * FROM books WHERE book_id = %s", (book_id,)).one()
+                if not book:
+                    return {"error": "Book does not exist."}
+
+                # Attempt to make the reservation
+                reserved_at = datetime.now()
+                query = """
+                INSERT INTO book_reservations (book_id, reservation_id, user_id, reserved_at)
+                VALUES (%s, %s, %s, %s)
+                """
+                try:
+                    self.session.execute(query, (book_id, reservation_id, user_id, reserved_at))
+                    # Reservation successful
+                    self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, user_id, reserved_at))
+                    self.session.execute("INSERT INTO user_reservations (user_id, reservation_id, book_id, reserved_at) VALUES (%s, %s, %s, %s)", (user_id, reservation_id, book_id, reserved_at))
+                    return {"message": "Reservation made successfully."}
+                except cassandra.protocol.AlreadyExists:
+                    # Another reservation was made in the meantime, retry
+                    continue
+            except Exception as e:
+                # Log the error or handle it as needed
+                return {"error": str(e)}
+        # Retry limit exceeded
+        return {"error": "Failed to make reservation after multiple attempts."}
+        
+
+    @run_on_executor
+    def update_reservation(self, book_id, user_id):
         try:
             user_id = int(user_id)
         except ValueError:
             return {"error": "Invalid user_id."}
         
-        # Check book_reservation if the book is available
-        book = self.session.execute("SELECT * FROM book_reservations WHERE book_id = %s", (book_id,)).one()
-        if book:
-            return {"error": "Book is already reserved."}
-        
-        # Make the reservation
-        reserved_at = datetime.now()
-        self.session.execute("INSERT INTO book_reservations (book_id, reservation_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (book_id, reservation_id, user_id, reserved_at))
-        self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, user_id, reserved_at))
-        self.session.execute("INSERT INTO user_reservations (user_id, reservation_id, book_id, reserved_at) VALUES (%s, %s, %s, %s)", (user_id, reservation_id, book_id, reserved_at))
-        return {"message": "Reservation made successfully."}
-        
-
-    @run_on_executor
-    def update_reservation(self, reservation_id):
-        reservation = self.session.execute("SELECT * FROM reservations WHERE reservation_id = %s", (reservation_id,)).one()
+        reservation = self.session.execute("SELECT * FROM reservations WHERE user_id = %s AND book_id = %s", (user_id, book_id)).one()
         if not reservation:
             return {"error": "Reservation not found."}
         # read necessary data
-        user_id = reservation.user_id
-        book_id = reservation.book_id
+        reservation_id = reservation.reservation_id
         reserved_at = datetime.now()
         # update the reservation
-        self.session.execute("UPDATE reservations SET reserved_at = %s WHERE reservation_id = %s", (reserved_at, reservation_id))
+        self.session.execute("UPDATE reservations SET reserved_at = %s WHERE user_id = %s AND book_id = %s", (reserved_at, user_id, book_id))
         self.session.execute("UPDATE user_reservations SET reserved_at = %s WHERE reservation_id = %s AND user_id = %s", (reserved_at, reservation_id, user_id))
         self.session.execute("UPDATE book_reservations SET reserved_at = %s WHERE reservation_id = %s AND book_id = %s", (reserved_at, reservation_id, book_id))
         return {"message": "Reservation updated successfully."}
-
-    @run_on_executor
-    def view_reservation(self, reservation_id):
-        reservation = self.session.execute("SELECT * FROM reservations WHERE reservation_id = %s", (reservation_id,)).one()
-        if not reservation:
-            return {"error": "Reservation not found."}
-        return {
-            "reservation_id": str(reservation.reservation_id),
-            "book_id": str(reservation.book_id),
-            "user_id": reservation.user_id
-        }
 
     @run_on_executor
     def remove_reservation(self, book_id, user_id):
@@ -71,7 +88,8 @@ class LibrarySystem:
             return {"error": "Invalid user_id."}
         
         # Check book_reservation if the book is available
-        book = self.session.execute("SELECT * FROM book_reservations WHERE book_id = %s", (book_id,)).one()
+        result = self.session.execute("SELECT * FROM book_reservations WHERE book_id = %s", (book_id,))
+        book = result.one() if result else None
         if book:
             reservation_id = book.reservation_id
             # check if the user is the owner of the reservation
@@ -79,7 +97,7 @@ class LibrarySystem:
                 return {"error": "User is not the owner of the reservation."}
             # remove the reservation
             self.session.execute("DELETE FROM book_reservations WHERE book_id = %s AND reservation_id=%s", (book_id, reservation_id))
-            self.session.execute("DELETE FROM reservations WHERE reservation_id = %s", (reservation_id,))
+            self.session.execute("DELETE FROM reservations WHERE book_id = %s AND user_id = %s", (book_id, user_id))
             self.session.execute("DELETE FROM user_reservations WHERE user_id = %s AND reservation_id = %s", (user_id, reservation_id))
             return {"message": "Reservation removed successfully."}
         
@@ -117,8 +135,9 @@ class MakeReservationHandler(BaseHandler):
 class UpdateReservationHandler(BaseHandler):
     async def post(self):
         data = json.loads(self.request.body)
-        reservation_id = uuid.UUID(data['reservation_id'])
-        result = await library_system.update_reservation(reservation_id)
+        book_id = uuid.UUID(data['book_id'])
+        user_id = data['user_id']
+        result = await library_system.update_reservation(book_id, user_id)
         self.write(json.dumps(result))
 
 class RemoveReservationHandler(BaseHandler):
