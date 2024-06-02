@@ -88,6 +88,13 @@ def main(csv_file=None, num_records=200):
         )
     """)
 
+    # Create reservation_by_book_id table
+    session.execute("""
+        CREATE TABLE IF NOT EXISTS reservation_by_book_id (
+            book_id UUID PRIMARY KEY
+        )
+    """)
+
     print("Tables created successfully.")
     print("Populating books...")
 
