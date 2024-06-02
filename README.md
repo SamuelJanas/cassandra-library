@@ -1,5 +1,10 @@
+## Description
+This is a simple library system implemented in Python using Tornado and Cassandra. 
+The UI is implemented for the developer to test the system. The system allows for viewing books and reservations, making reservations, cancelling and updating them.
+
 ## How to use?
-1. Run `docker-compose up --build seeder` to build and start the containers and populate the databse
+1. Run `docker-compose up --build seeder` to build and start the containers and populate the database with seeded data.
+  Note: It's possible to generate random data by slightly modifying the `Dockerfile`. 
 2. Run `docker-compose up --build app` to build containers and run the app
 3. Open your browser and go to `http://localhost:8888/` to see the app running.
 
