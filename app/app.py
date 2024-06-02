@@ -17,47 +17,51 @@ class LibrarySystem:
         self.executor = ThreadPoolExecutor(max_workers=4)
 
     @run_on_executor
-    def make_reservation(self, book_id, user_id, retries=1):
-        for _ in range(retries):
+    def make_reservation(self, book_id, user_id):
+        try:
+            reservation_id = uuid.uuid4()
+
+            # Check if user_id is an integer
             try:
-                reservation_id = uuid.uuid4()
-                # check if user_id is an integer
-                try:
-                    user_id = int(user_id)
-                except ValueError:
-                    return {"error": "Invalid user_id."}
+                user_id = int(user_id)
+            except ValueError:
+                return {"error": "Invalid user_id."}
 
-                # Check if the book is available for reservation
-                query = "SELECT * FROM book_reservations WHERE book_id = %s LIMIT 1"
-                existing_reservation = self.session.execute(query, (book_id,)).one()
-                if existing_reservation:
-                    return {"error": "Book is already reserved."}
+            # Attempt to insert into reservation_by_book_id to lock the book
+            query = "INSERT INTO reservation_by_book_id (book_id) VALUES (%s) IF NOT EXISTS"
+            result = self.session.execute(query, (book_id,))
+            if not result.one()[0]:
+                return {"error": "Book is already reserved."}
 
-                # Check if the book exists
-                book = self.session.execute("SELECT * FROM books WHERE book_id = %s", (book_id,)).one()
-                if not book:
-                    return {"error": "Book does not exist."}
+            # Check if the book exists
+            book = self.session.execute("SELECT * FROM books WHERE book_id = %s", (book_id,)).one()
+            if not book:
+                # Clean up the lock
+                self.session.execute("DELETE FROM reservation_by_book_id WHERE book_id = %s", (book_id,))
+                return {"error": "Book does not exist."}
 
-                # Attempt to make the reservation
-                reserved_at = datetime.now()
-                query = """
+            # Proceed with reservation
+            reserved_at = datetime.now()
+            self.session.execute("""
                 INSERT INTO book_reservations (book_id, reservation_id, user_id, reserved_at)
                 VALUES (%s, %s, %s, %s)
-                """
-                try:
-                    self.session.execute(query, (book_id, reservation_id, user_id, reserved_at))
-                    # Reservation successful
-                    self.session.execute("INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at) VALUES (%s, %s, %s, %s)", (reservation_id, book_id, user_id, reserved_at))
-                    self.session.execute("INSERT INTO user_reservations (user_id, reservation_id, book_id, reserved_at) VALUES (%s, %s, %s, %s)", (user_id, reservation_id, book_id, reserved_at))
-                    return {"message": "Reservation made successfully."}
-                except cassandra.protocol.AlreadyExists:
-                    # Another reservation was made in the meantime, retry
-                    continue
-            except Exception as e:
-                # Log the error or handle it as needed
-                return {"error": str(e)}
-        # Retry limit exceeded
-        return {"error": "Failed to make reservation after multiple attempts."}
+            """, (book_id, reservation_id, user_id, reserved_at))
+
+            self.session.execute("""
+                INSERT INTO reservations (reservation_id, book_id, user_id, reserved_at)
+                VALUES (%s, %s, %s, %s)
+            """, (reservation_id, book_id, user_id, reserved_at))
+
+            self.session.execute("""
+                INSERT INTO user_reservations (user_id, reservation_id, book_id, reserved_at)
+                VALUES (%s, %s, %s, %s)
+            """, (user_id, reservation_id, book_id, reserved_at))
+
+            # Reservation successful
+            return {"message": "Reservation made successfully."}
+        except Exception as e:
+            # Log the error or handle it as needed
+            return {"error": str(e)}
         
 
     @run_on_executor
@@ -81,28 +85,32 @@ class LibrarySystem:
 
     @run_on_executor
     def remove_reservation(self, book_id, user_id):
-        # check if user_id is an integer
+        # Check if user_id is an integer
         try:
             user_id = int(user_id)
         except ValueError:
             return {"error": "Invalid user_id."}
-        
-        # Check book_reservation if the book is available
+
+        # Check book_reservation if the book is reserved
         result = self.session.execute("SELECT * FROM book_reservations WHERE book_id = %s", (book_id,))
         book = result.one() if result else None
         if book:
             reservation_id = book.reservation_id
-            # check if the user is the owner of the reservation
+            # Check if the user is the owner of the reservation
             if int(book.user_id) != user_id:
                 return {"error": "User is not the owner of the reservation."}
-            # remove the reservation
-            self.session.execute("DELETE FROM book_reservations WHERE book_id = %s AND reservation_id=%s", (book_id, reservation_id))
+            
+            # Remove the reservation
+            self.session.execute("DELETE FROM book_reservations WHERE book_id = %s AND reservation_id = %s", (book_id, reservation_id))
             self.session.execute("DELETE FROM reservations WHERE book_id = %s AND user_id = %s", (book_id, user_id))
             self.session.execute("DELETE FROM user_reservations WHERE user_id = %s AND reservation_id = %s", (user_id, reservation_id))
+            
+            # Remove the lock
+            self.session.execute("DELETE FROM reservation_by_book_id WHERE book_id = %s", (book_id,))
+
             return {"message": "Reservation removed successfully."}
-        
+
         return {"error": "Reservation not found."}
-        # remove the reservation
         
 
     @run_on_executor

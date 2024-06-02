@@ -107,4 +107,4 @@ if __name__ == "__main__":
     random_book_id = uuid.UUID(books[2]["book_id"])
     random_user_id = 132
 
-    stress_test_3(books[:250])
+    stress_test_3(books[:125])
