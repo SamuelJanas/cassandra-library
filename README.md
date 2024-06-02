@@ -44,3 +44,20 @@ To access cqlsh, run `docker-compose exec <container-name> cqlsh` in your termin
 | reservation_id   | UUID      | Yes         | Reservation ID              |
 | user_id          | INT       |             | ID of the user making reservation |
 | reserved_at      | TIMESTAMP |             | Timestamp of reservation    |
+
+#### Table: reservation_by_book_id
+| Column           | Type      | Primary Key | Description                 |
+|------------------|-----------|-------------|-----------------------------|
+| book_id          | UUID      | Yes         | lock mechanism for concurrent requests |
+
+## Testing
+There is a separate script to run tests. You can run `python stress_test.py <test_number> --size <size>` to run the apropriate test.
+Short description of the tests:
+- `1`: one user makes the same reservation `size` times
+- `2`: `num_workers` clients make requests randomly (`size` times)
+- `3`: Immediate occupancy of all reservations by 2 clients. You can set the number of books with `--size` flag
+- `4`: Constant cancellations and book occupancy for the same book. (`size` 'cycles')
+- `5`: Update `size` reservations concurrently using multiple workers.
+
+**Note**: there is a `unreserve_all.py` script to remove all reservations from the database. You can run it to 'reset' the database.
+
