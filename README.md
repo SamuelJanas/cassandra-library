@@ -25,8 +25,8 @@ To access cqlsh, run `docker-compose exec <container-name> cqlsh` in your termin
 | Column           | Type      | Primary Key | Description                 |
 |------------------|-----------|-------------|-----------------------------|
 | reservation_id   | UUID      |             | Unique reservation identifier|
-| book_id          | UUID      | YES         | ID of the reserved book     |
-| user_id          | INT       | YES         | ID of the user making reservation |
+| book_id          | UUID      | Yes         | ID of the reserved book     |
+| user_id          | INT       | Yes         | ID of the user making reservation |
 | reserved_at      | TIMESTAMP |             | Timestamp of reservation    |
 
 #### Table: user_reservations
