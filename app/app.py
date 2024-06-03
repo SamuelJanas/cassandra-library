@@ -74,6 +74,7 @@ class LibrarySystem:
         reservation = self.session.execute("SELECT * FROM reservations WHERE user_id = %s AND book_id = %s", (user_id, book_id)).one()
         if not reservation:
             return {"error": "Reservation not found."}
+ 
         # read necessary data
         reservation_id = reservation.reservation_id
         reserved_at = datetime.now()

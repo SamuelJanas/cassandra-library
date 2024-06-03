@@ -18,8 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     row.insertCell(2).textContent = book.author;
                     row.insertCell(3).textContent = book.genre;
                     row.insertCell(4).textContent = book.published_year;
-                    // log that the book is added to the table
-                    console.log("Book added to the table");
                 });
             });
     }
@@ -61,8 +59,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateReservationForm.addEventListener("submit", event => {
         event.preventDefault();
-        const bookId = document.getElementById("book-id").value;
-        const userId = document.getElementById("user-id").value;
+        const bookId = document.getElementById("update-book-id").value;
+        const userId = document.getElementById("update-user-id").value;
 
         fetch("/update_reservation", {
             method: "POST",
@@ -74,6 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .then(response => response.json())
             .then(data => {
                 alert(data.message || data.error);
+                fetchBooks();
                 fetchReservations();
             });
     });
